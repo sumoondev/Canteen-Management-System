@@ -1,7 +1,10 @@
 {% extends "index.html" %}
 {% block start %}
+{% load static %}
+<div class="bg-image"></div>
+<div class="bg-overlay"></div>
 
-<div class="center-ctn">
+<div class="center-ctn shadow-lg">
     <form class="card p-4 shadow-lg" method="post" style="width: min(520px, 92%);">
         {% csrf_token %}
 

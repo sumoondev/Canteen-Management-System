@@ -1,7 +1,10 @@
 {% extends "index.html" %}
 {% block start %}
+{% load static %}
+<div class="bg-image"></div>
+<div class="bg-overlay"></div>
 
-<div class="center-ctn">
+<div class="center-ctn shadow-lg">
   <form class="card p-4 shadow-lg" method="post" enctype="multipart/form-data" style="width: min(560px, 96%);">
     {% csrf_token %}
     <div class="mb-3">
@@ -15,13 +18,13 @@
       </select>
 
       <label class="form-label">UserCode:</label>
-      <input type="text" name="user_code" class="form-control mb-2">
+      <input type="text" name="user_code" class="form-control mb-2" required>
 
       <label class="form-label">Username:</label>
-      <input type="text" name="username" class="form-control mb-2">
+      <input type="text" name="username" class="form-control mb-2" required>
 
       <label class="form-label">Password:</label>
-      <input type="password" name="password" class="form-control mb-2">
+      <input type="password" name="password" class="form-control mb-2" required>
 
       <p class="mt-2">Already have an account? <a href="/login/">Log In</a></p>
 
