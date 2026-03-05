@@ -97,7 +97,6 @@
                     <th class="text-start">Item</th>
                     <th>Qty</th>
                     <th>Price</th>
-                    <th>Total</th>
                 </tr>
             </thead>
 
@@ -109,7 +108,6 @@
                     <td class="text-start">{{ item.item.item_name }}</td>
                     <td>{{ item.quantity }}</td>
                     <td>Rs {{ item.price_at_purchase }}</td>
-                    <td>Rs {{ item.total_price }}</td>
                 </tr>
 
                 {% endfor %}
