@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, render,redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 from inventory.models import Inventory
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -13,6 +14,7 @@ from .forms import InventoryItemForm, RegistrationForm
 
 # Create your views here.
 LOW_STOCK_THRESHOLD = 10
+PAGE_SIZE = 12
 
 
 def admin_required(view_func):
@@ -96,14 +98,44 @@ def admin_page(request):
     else:
         item_form = InventoryItemForm()
 
-    queryset = Inventory.objects.all().order_by('item_name')
+    base_queryset = Inventory.objects.all()
+    queryset = base_queryset
+
+    current_filter = request.GET.get('filter', 'all')
+    if current_filter == 'low_stock':
+        queryset = queryset.filter(quantity__lt=LOW_STOCK_THRESHOLD)
+    elif current_filter == 'unavailable':
+        queryset = queryset.filter(is_available=False)
+
+    sort_map = {
+        'name': 'item_name',
+        'category': 'category',
+        'price': 'price',
+        'quantity': 'quantity',
+        'status': 'is_available',
+    }
+    current_sort = request.GET.get('sort', 'name')
+    current_dir = request.GET.get('dir', 'asc')
+    sort_field = sort_map.get(current_sort, 'item_name')
+    if current_dir == 'desc':
+        sort_field = f'-{sort_field}'
+
+    queryset = queryset.order_by(sort_field, 'id')
+
+    paginator = Paginator(queryset, PAGE_SIZE)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     context = {
         'inventory': queryset,
         'item_form': item_form,
+        'page_obj': page_obj,
+        'current_filter': current_filter,
+        'current_sort': current_sort,
+        'current_dir': current_dir,
         'stats': {
-            'total_items': queryset.count(),
-            'available_items': queryset.filter(is_available=True).count(),
-            'low_stock_items': queryset.filter(quantity__lt=LOW_STOCK_THRESHOLD).count(),
+            'total_items': base_queryset.count(),
+            'available_items': base_queryset.filter(is_available=True).count(),
+            'low_stock_items': base_queryset.filter(quantity__lt=LOW_STOCK_THRESHOLD).count(),
         },
         'low_stock_threshold': LOW_STOCK_THRESHOLD,
     }
