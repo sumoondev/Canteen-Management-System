@@ -5,7 +5,7 @@
 <div class="bg-overlay"></div>
 
 <div class="center-ctn shadow-lg">
-    <form class="card p-4 shadow-lg" method="post" style="width: min(520px, 92%);">
+    <form class="card p-4 shadow-lg auth-card" method="post">
         {% csrf_token %}
         {% if next %}
         <input type="hidden" name="next" value="{{ next }}">
