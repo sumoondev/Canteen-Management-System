@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Canteen Management System</title>
+
+    {% load static %}
+
+    <style>
+        :root {
+            --accent: #1d4ed8;
+            --accent-contrast: #ffffff;
+            --accent-soft: #dbeafe;
+            --bg: #f5f6f8;
+            --surface: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+        }
+
+        *{
+            margin:0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: var(--bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: var(--text);
+        }
+        .card {
+            border: none;
+            border-radius: 8px;
+            background-color: var(--surface);
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .btn {
+            border-radius: 5px;
+        }
+        .form-control, .form-select {
+            border-radius: 5px;
+        }
+        td,th{
+            padding: 10px;
+            align-items:center;
+        }
+
+        /* Fullscreen blurred background */
+        .bg-image{
+            position: fixed;
+            inset: 0;
+            background: center/cover no-repeat url('{% static "background.jpg" %}');
+            filter: blur(6px);
+            transform: scale(1.03);
+            z-index: -2;
+        }
+
+        /* Dim overlay to make content readable */
+        .bg-overlay{
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: -1;
+        }
+
+        /* Centered content container for the button */
+        .center-ctn{
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .center-ctn .btn-lg {
+            padding: 14px 30px;
+            font-size: 1.25rem;
+        }
+
+        .auth-card {
+            width: min(520px, 92%);
+        }
+
+        .auth-card-wide {
+            width: min(560px, 96%);
+        }
+
+        .auth-form .form-label {
+            margin-top: 0.25rem;
+        }
+
+        .auth-form .form-control,
+        .auth-form .form-select {
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-form .input-group-text,
+        .auth-form .password-toggle {
+            min-width: 44px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-form .input-group-text i,
+        .auth-form .password-toggle i {
+            width: 1rem;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .auth-title-icon {
+            font-size: 1.05em;
+            vertical-align: -0.08em;
+        }
+
+        .auth-hint {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .admin-action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .btn-primary,
+        .bg-primary {
+            background-color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: var(--accent-contrast) !important;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: #1e40af !important;
+            border-color: #1e40af !important;
+        }
+
+        .btn-success,
+        .bg-success {
+            background-color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: var(--accent-contrast) !important;
+        }
+
+        .btn-success:hover,
+        .btn-success:focus {
+            background-color: #1e40af !important;
+            border-color: #1e40af !important;
+        }
+
+        .badge.bg-warning {
+            background-color: var(--accent-soft) !important;
+            color: #1f2937 !important;
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        /* ── Global Animation Keyframes ── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15%, 45%, 75% { transform: translateX(-6px); }
+            30%, 60%, 90% { transform: translateX(6px); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Utility animation classes */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease both;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease both;
+        }
+        .animate-slide-right {
+            animation: slideInRight 0.45s ease both;
+        }
+        .animate-slide-left {
+            animation: slideInLeft 0.45s ease both;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.4s ease both;
+        }
+        .animate-shake {
+            animation: shake 0.5s ease;
+        }
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Stagger delays for sequential entrance */
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+        .stagger-6 { animation-delay: 0.3s; }
+        .stagger-7 { animation-delay: 0.35s; }
+
+        /* Global button micro-interactions */
+        .btn {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Input focus glow */
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Smooth alert entrance */
+        .alert {
+            animation: slideDown 0.35s ease both;
+        }
+
+        /* Loading spinner for submit buttons */
+        .btn .btn-spinner {
+            display: none;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        .btn.is-loading .btn-spinner {
+            display: inline-block;
+        }
+        .btn.is-loading .btn-label {
+            opacity: 0.6;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Password strength bar */
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .strength-bar-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        .strength-bar-fill.weak   { width: 33%; background-color: #ef4444; }
+        .strength-bar-fill.medium { width: 66%; background-color: #f59e0b; }
+        .strength-bar-fill.strong { width: 100%; background-color: #22c55e; }
+
+        /* Respect reduced-motion globally */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+    {% block start %}
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+
+    <div class="center-ctn">
+        <a href="/login/" class="btn btn-primary btn-lg shadow">
+            <i class="fa fa-solid fa-bowl-food me-2"></i> Order Food
+        </a>
+    </div>
+
+    {% endblock %}
+
+    {% if clear_cart_user_id %}
+    <script>
+        try {
+            localStorage.removeItem('cart');
+            localStorage.removeItem('cart_{{ clear_cart_user_id }}');
+        } catch (e) {
+            // ignore storage errors
+        }
+    </script>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

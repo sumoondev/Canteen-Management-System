@@ -1,0 +1,1114 @@
+{% extends "index.html" %}
+{% block start %}
+{% load static %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center p-3 bg-dark text-light shadow animate-slide-down">
+  <h3 class="mb-0">
+    <i class="fa fa-utensils"></i> Canteen Menu
+  </h3>
+  <div class="d-flex align-items-center gap-3">
+    <span class="fw-light">Welcome, <strong>{{ user.username }}</strong></span>
+    <form method="post" action="{% url 'logout' %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm">
+        <i class="fa fa-sign-out-alt"></i> Logout
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="menu-layout d-flex flex-column flex-lg-row">
+
+  <!-- RIGHT SIDE (Menu Items) -->
+  <div class="menu-panel flex-grow-1 p-3 order-2 order-lg-1">
+    <div class="container-fluid">
+      
+      <!-- Page Title -->
+      <div class="mb-3 animate-fade-in">
+        <h5 class="fw-bold text-dark mb-1">Our Menu <i class="fa fa-utensils" style="color:#ffc107"></i></h5>
+        <p class="text-muted small mb-0">Choose your favorite items and add to cart</p>
+      </div>
+
+      <!-- Search + Category Filters -->
+      <div class="menu-controls d-flex flex-column flex-md-row align-items-md-center gap-2 mb-3">
+        <div class="flex-grow-1">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="menu-search"
+              placeholder="Search items (e.g. momo, tea)"
+              aria-label="Search menu items"
+            >
+          </div>
+        </div>
+        <div id="category-chips" class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary category-chip active" data-category="all">
+            All
+          </button>
+        </div>
+      </div>
+
+      <!-- Menu Grid -->
+      <div class="row g-2" id="menu-grid">
+        {% for item in inventory %}
+        <div class="col-xxl-2 col-xl-3 col-lg-3 col-md-4 col-sm-6 col-6 menu-card-col animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}50ms">
+          <div
+            class="card food-card h-100 border-0 shadow-sm"
+            data-item-id="{{ item.id }}"
+            data-stock="{{ item.quantity }}"
+            data-category="{{ item.category }}"
+            data-category-label="{{ item.get_category_display }}"
+            data-name="{{ item.item_name }}"
+          >
+            
+            <!-- Food Image Container -->
+            <div class="position-relative overflow-hidden" style="height: 120px; background-color: #e9ecef;">
+              <img 
+                src="{% if item.food_image %}{{ item.food_image.url }}{% else %}{% static 'inventory_images/momo.webp' %}{% endif %}"
+                data-fallback-src="{% static 'inventory_images/momo.webp' %}"
+                class="food-image w-100 h-100"
+                style="object-fit: cover; transition: transform 0.3s ease;"
+                alt="{{ item.item_name }}"
+                loading="lazy"
+              >
+              
+              <!-- Optional: Badge for special items -->
+              {% if item.is_special %}
+              <span class="badge bg-danger position-absolute top-0 end-0 m-1" style="font-size: 0.65rem;">Special</span>
+              {% endif %}
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body d-flex flex-column p-2">
+
+              <!-- Item Name -->
+              <h6 class="card-title fw-bold mb-1 text-dark" style="font-size: 0.85rem; min-height: 32px; line-height: 1.2;">
+                {{ item.item_name }}
+              </h6>
+
+              <!-- Price -->
+              <div class="mb-2">
+                <span class="fw-bold text-success" style="font-size: 0.95rem;">Rs {{ item.price }}</span>
+                <div class="small text-muted available-stock">Available: {{ item.quantity }}</div>
+              </div>
+
+              <!-- Quantity Selector -->
+              <div class="d-flex align-items-center justify-content-between mb-2 p-1 bg-light rounded">
+                <button class="btn btn-sm btn-outline-secondary qty-btn minus" style="width: 24px; height: 24px; padding: 0; font-size: 0.75rem;">
+                  <i class="fa fa-minus"></i>
+                </button>
+                <span class="qty-value fw-semibold" style="font-size: 0.9rem;">0</span>
+                <button class="btn btn-sm btn-outline-secondary qty-btn plus" style="width: 24px; height: 24px; padding: 0; font-size: 0.75rem;">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </div>
+
+              <!-- Add to Cart Button -->
+              <button 
+                class="btn btn-warning w-100 add-to-cart btn-sm"
+                data-name="{{ item.item_name }}"
+                data-price="{{ item.price }}" 
+                data-item-id="{{ item.id }}"
+                data-stock="{{ item.quantity }}"
+                style="transition: all 0.3s ease; font-size: 0.75rem; padding: 0.35rem 0.5rem;"
+                {% if item.quantity < 1 %}disabled{% endif %}
+              >
+                {% if item.quantity < 1 %}
+                <i class="fa fa-ban me-1"></i>Out of stock
+                {% else %}
+                <i class="fa fa-cart-plus me-1"></i>Add
+                {% endif %}
+              </button>
+
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+          <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+          <p class="text-muted">No items available at the moment</p>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="menu-empty" class="text-center py-5 d-none">
+        <i class="fa fa-search fa-3x text-muted mb-3"></i>
+        <p class="text-muted mb-0">No items match your filters.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LEFT SIDE (DO NOT TOUCH) -->
+<!-- LEFT SIDE -->
+<div class="cart-sidebar shadow-lg d-flex flex-column order-1 order-lg-2">
+
+  <!-- Cart Panel -->
+  <div class="d-flex flex-column flex-grow-1 bg-dark text-light rounded p-2">
+
+    <!-- Cart Header -->
+    <div class="cart-header d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2">
+      <div>
+        <h5 class="mb-0">
+          <i class="fa fa-shopping-cart me-1"></i> My Cart
+        </h5>
+        <div class="small text-light-emphasis" id="cart-summary">0 selections</div>
+      </div>
+      <span id="cart-count" class="badge bg-warning text-dark">0</span>
+    </div>
+
+    <!-- Cart Items -->
+    <div id="cart-container" class="flex-grow-1 overflow-auto pe-1">
+      <!-- Items Render Here -->
+    </div>
+
+    <!-- Cart Footer -->
+    <div class="border-top border-secondary pt-2 mt-2">
+      <div class="d-flex justify-content-between fw-bold mb-2">
+        <span>Total</span>
+        <span id="cart-total" class="text-warning">Rs 0</span>
+      </div>
+      <div class="d-flex justify-content-between small text-light-emphasis mb-2">
+        <span>Total Items</span>
+        <span id="cart-total-items">0</span>
+      </div>
+
+      <div class="d-grid gap-1">
+        <button class="btn btn-warning btn-sm" id="checkout-button" onclick="checkout()" type="button">
+          <span class="checkout-label"><i class="fa fa-credit-card me-1"></i>Checkout</span>
+          <span id="checkout-spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+        </button>
+        <button class="btn btn-outline-light btn-sm" onclick="clearCart()">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="menu-toast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div id="menu-toast-body" class="toast-body">Something went wrong.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<div id="checkout-transition" class="checkout-transition-overlay" aria-hidden="true">
+  <div class="checkout-transition-card shadow-lg">
+    <div class="spinner-border text-warning mb-3" role="status" aria-hidden="true"></div>
+    <h5 class="mb-2">Generating Receipt</h5>
+    <p class="mb-0 text-muted">Please wait while we confirm your checkout.</p>
+  </div>
+</div>
+<style>
+ #cart-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+#cart-container::-webkit-scrollbar-thumb {
+  background-color: #6c757d;
+  border-radius: 4px;
+}
+
+.menu-layout {
+  min-height: calc(100vh - 70px);
+}
+
+.menu-panel {
+  flex: 1 1 auto;
+  background-color: #f8f9fa;
+  overflow-y: auto;
+}
+
+.cart-sidebar {
+  flex: 0 0 320px;
+  background-color: #e9ecef;
+  padding: 5px;
+}
+
+.menu-controls .form-control:focus {
+  box-shadow: none;
+}
+
+.category-chip {
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.category-chip.active {
+  background-color: #212529;
+  border-color: #212529;
+  color: #fff;
+}
+
+.cart-header {
+  position: sticky;
+  top: 0;
+  background-color: #212529;
+  z-index: 2;
+}
+
+.cart-item {
+  transition: all 0.25s ease;
+  animation: slideInRight 0.3s ease both;
+}
+
+.cart-item:hover {
+  background-color: #2c3034 !important;
+}
+
+.cart-item-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: #d1d5db;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.cart-item-unit-price {
+  color: #adb5bd;
+  font-size: 0.75rem;
+}
+
+.cart-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.cart-item-controls .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.cart-item-removing {
+  animation: fadeOutLeft 0.25s ease both;
+}
+
+@keyframes fadeOutLeft {
+  to { opacity: 0; transform: translateX(-20px); height: 0; padding: 0; margin: 0; overflow: hidden; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+} 
+  .food-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .food-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15) !important;
+  }
+
+  .food-card:hover .food-image {
+    transform: scale(1.05);
+  }
+
+  .add-to-cart {
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+  }
+
+  .add-to-cart:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  }
+
+  /* Added to cart success flash */
+  .add-to-cart.added-flash {
+    background-color: #22c55e !important;
+    border-color: #22c55e !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+
+  .qty-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qty-btn:hover {
+    background-color: #0d6efd !important;
+    color: white !important;
+    border-color: #0d6efd !important;
+  }
+
+  .qty-value {
+    min-width: 30px;
+    text-align: center;
+    color: #212529;
+  }
+
+  /* Hide scrollbar but keep scrolling functionality */
+  .flex-grow-1 {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .flex-grow-1::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  #card-container{
+    padding: 10px;
+  }
+  .carts{
+    display: flex;
+    justify-content: space-between;
+  }
+
+#price_quant{
+ font-size: small;
+ color: #adb7c0;
+}
+
+  @media (prefers-reduced-motion: reduce) {
+    .food-card,
+    .food-image,
+    .add-to-cart,
+    .category-chip,
+    .cart-item,
+    .menu-card-col {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* Checkout button pulse when cart has items */
+  .checkout-has-items {
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.5);
+  }
+
+  /* Cart count badge pop */
+  .cart-count-pop {
+    animation: cartPop 0.3s ease;
+  }
+  @keyframes cartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+
+  /* Category chip active bounce */
+  .category-chip:active {
+    transform: scale(0.93);
+  }
+
+  .checkout-transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+    z-index: 1100;
+  }
+
+  .checkout-transition-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .checkout-transition-card {
+    width: min(360px, calc(100vw - 2rem));
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.5rem;
+    text-align: center;
+    transform: translateY(18px) scale(0.98);
+    transition: transform 0.28s ease;
+  }
+
+  .checkout-transition-overlay.is-visible .checkout-transition-card {
+    transform: translateY(0) scale(1);
+  }
+
+  /* .carts div{
+    display:flex;
+    flex-direction: column;
+  } */
+  /* Responsive adjustments */
+  @media (max-width: 991.98px) {
+    .menu-layout {
+      min-height: auto;
+      gap: 0.75rem;
+    }
+
+    .menu-panel {
+      overflow-y: visible;
+    }
+
+    .cart-sidebar {
+      flex-basis: auto;
+      width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .cart-sidebar .bg-dark {
+      max-height: 45vh;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .food-card {
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .checkout-transition-overlay,
+    .checkout-transition-card {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+
+  function getCookies(name){
+    let cookieValue=null;
+    if(document.cookie && document.cookie != ''){
+      const cookies= document.cookie.split(';');
+      for (let i=0; i<cookies.length;i++){
+        const cookie=cookies[i].trim();
+        if(cookie.substring(0,name.length+1) === (name + '=')){
+          cookieValue=decodeURIComponent(cookie.substring(name.length+1));
+        }
+      }
+    }
+    return cookieValue;
+  }  
+
+	  const csrftoken= getCookies('csrftoken');
+
+  document.querySelectorAll('.food-card img').forEach(image => {
+    image.addEventListener('error', function () {
+      const fallbackSrc = this.dataset.fallbackSrc;
+      if (fallbackSrc && this.src !== fallbackSrc) {
+        this.src = fallbackSrc;
+      }
+    });
+  });
+
+
+
+  const POLL_INTERVAL_MS = 10000;
+  const inventorySnapshotUrl = '{% url "inventory_snapshot" %}';
+	  const stockByItemId = {};
+  const searchInput = document.getElementById('menu-search');
+  const chipContainer = document.getElementById('category-chips');
+  const emptyState = document.getElementById('menu-empty');
+  const checkoutButton = document.getElementById('checkout-button');
+  const checkoutSpinner = document.getElementById('checkout-spinner');
+  const checkoutTransition = document.getElementById('checkout-transition');
+  const menuGrid = document.getElementById('menu-grid');
+  let activeCategory = 'all';
+
+  function showToast(message, variant = 'danger') {
+    const toastElement = document.getElementById('menu-toast');
+    const toastBody = document.getElementById('menu-toast-body');
+    if (!toastElement || !toastBody || typeof bootstrap === 'undefined') {
+      alert(message);
+      return;
+    }
+
+    toastElement.classList.remove('text-bg-danger', 'text-bg-warning', 'text-bg-success', 'text-bg-info');
+    toastElement.classList.add(`text-bg-${variant}`);
+    toastBody.textContent = message;
+    bootstrap.Toast.getOrCreateInstance(toastElement, { delay: 3500 }).show();
+  }
+
+  function setCheckoutLoading(isLoading) {
+    if (!checkoutButton || !checkoutSpinner) {
+      return;
+    }
+    checkoutButton.disabled = isLoading;
+    checkoutSpinner.classList.toggle('d-none', !isLoading);
+  }
+
+  function setCheckoutTransition(isVisible) {
+    if (!checkoutTransition) {
+      return;
+    }
+    checkoutTransition.classList.toggle('is-visible', isVisible);
+    checkoutTransition.setAttribute('aria-hidden', String(!isVisible));
+  }
+
+  function getSafeQuantity(value) {
+    const quantity = Number.parseInt(value, 10);
+    return Number.isInteger(quantity) ? quantity : 0;
+  }
+
+  function resetCardQuantity(card) {
+    const qtyValue = card ? card.querySelector('.qty-value') : null;
+    if (qtyValue) {
+      qtyValue.textContent = '0';
+    }
+  }
+
+  function setCardState(card, availableStock) {
+    if (!card) {
+      return;
+    }
+
+    const qtyValue = card.querySelector('.qty-value');
+    const minusBtn = card.querySelector('.minus');
+    const plusBtn = card.querySelector('.plus');
+    const addBtn = card.querySelector('.add-to-cart');
+    const stockLabel = card.querySelector('.available-stock');
+    const safeStock = getSafeQuantity(availableStock);
+
+    card.dataset.stock = String(safeStock);
+    stockByItemId[card.dataset.itemId] = safeStock;
+
+    if (stockLabel) {
+      stockLabel.textContent = `Available: ${safeStock}`;
+    }
+
+    if (safeStock < 1) {
+      if (qtyValue) {
+        qtyValue.textContent = '0';
+      }
+      if (minusBtn) {
+        minusBtn.disabled = true;
+      }
+      if (plusBtn) {
+        plusBtn.disabled = true;
+      }
+      if (addBtn) {
+        addBtn.disabled = true;
+        addBtn.innerHTML = '<i class="fa fa-ban me-1"></i>Out of stock';
+      }
+      return;
+    }
+
+    const currentQty = Math.min(getSafeQuantity(qtyValue ? qtyValue.textContent : 0), safeStock);
+    if (qtyValue) {
+      qtyValue.textContent = String(currentQty);
+    }
+    if (minusBtn) {
+      minusBtn.disabled = currentQty <= 0;
+    }
+    if (plusBtn) {
+      plusBtn.disabled = currentQty >= safeStock;
+    }
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.innerHTML = '<i class="fa fa-cart-plus me-1"></i>Add';
+    }
+  }
+
+  function applyInventorySnapshot(items) {
+    const snapshotItems = new Map(items.map(item => [String(item.id), item]));
+
+    document.querySelectorAll('.food-card').forEach(card => {
+      const snapshotItem = snapshotItems.get(card.dataset.itemId);
+      if (!snapshotItem) {
+        setCardState(card, 0);
+        return;
+      }
+
+      const title = card.querySelector('.card-title');
+      const priceLabel = card.querySelector('.text-success');
+      const addBtn = card.querySelector('.add-to-cart');
+
+      if (title) {
+        title.textContent = snapshotItem.item_name;
+      }
+      if (priceLabel) {
+        priceLabel.textContent = `Rs ${snapshotItem.price}`;
+      }
+      card.dataset.name = snapshotItem.item_name;
+      card.dataset.category = snapshotItem.category;
+      card.dataset.categoryLabel = snapshotItem.category_label;
+      if (addBtn) {
+        addBtn.dataset.name = snapshotItem.item_name;
+        addBtn.dataset.price = snapshotItem.price;
+      }
+
+      setCardState(card, snapshotItem.is_available ? snapshotItem.quantity : 0);
+    });
+
+    cart = sanitizeCart(cart);
+    saveCart();
+    renderCart();
+    filterMenu();
+  }
+
+  async function pollInventorySnapshot() {
+    try {
+      const response = await fetch(inventorySnapshotUrl, {
+        headers: {
+          Accept: 'application/json'
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = await response.json();
+      if (Array.isArray(payload.items)) {
+        applyInventorySnapshot(payload.items);
+      }
+    } catch (error) {
+      console.error('Inventory polling failed', error);
+    }
+  }
+
+  function sanitizeCart(rawCart) {
+    const sanitizedCart = {};
+
+    if (!rawCart || typeof rawCart !== 'object') {
+      return sanitizedCart;
+    }
+
+    Object.entries(rawCart).forEach(([itemId, item]) => {
+      const availableStock = getSafeQuantity(stockByItemId[itemId]);
+      const quantity = getSafeQuantity(item && item.quantity);
+      const price = Number.parseFloat(item && item.price);
+
+      if (availableStock < 1 || quantity < 1 || !Number.isFinite(price)) {
+        return;
+      }
+
+      sanitizedCart[itemId] = {
+        name: item && item.name ? item.name : 'Item',
+        price: price,
+        quantity: Math.min(quantity, availableStock),
+      };
+    });
+
+    return sanitizedCart;
+  }
+
+  function buildCategoryChips() {
+    if (!chipContainer) {
+      return;
+    }
+
+    const categories = new Map();
+    document.querySelectorAll('.food-card').forEach(card => {
+      const category = card.dataset.category;
+      const label = card.dataset.categoryLabel || category;
+      if (category && label) {
+        categories.set(category, label);
+      }
+    });
+
+    categories.forEach((label, category) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'btn btn-sm btn-outline-secondary category-chip';
+      chip.dataset.category = category;
+      chip.textContent = label;
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.category-chip').forEach(btn => btn.classList.remove('active'));
+        chip.classList.add('active');
+        activeCategory = category;
+        filterMenu();
+      });
+      chipContainer.appendChild(chip);
+    });
+  }
+
+  function filterMenu() {
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    let visibleCount = 0;
+    document.querySelectorAll('.food-card').forEach(card => {
+      const name = (card.dataset.name || '').toLowerCase();
+      const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
+      const matchesQuery = !query || name.includes(query);
+      const shouldShow = matchesCategory && matchesQuery;
+      const col = card.parentElement;
+      if (col) {
+        col.classList.toggle('d-none', !shouldShow);
+      }
+      if (shouldShow) {
+        visibleCount += 1;
+      }
+    });
+
+    if (emptyState) {
+      emptyState.classList.toggle('d-none', visibleCount > 0);
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterMenu);
+  }
+
+  if (chipContainer) {
+    const allChip = chipContainer.querySelector('[data-category="all"]');
+    if (allChip) {
+      allChip.addEventListener('click', () => {
+        document.querySelectorAll('.category-chip').forEach(btn => btn.classList.remove('active'));
+        allChip.classList.add('active');
+        activeCategory = 'all';
+        filterMenu();
+      });
+    }
+  }
+
+  buildCategoryChips();
+  filterMenu();
+
+  // Quantity selector functionality
+  document.querySelectorAll('.food-card').forEach(card => {
+    const itemId = card.dataset.itemId;
+    const availableStock = getSafeQuantity(card.dataset.stock);
+    const minusBtn = card.querySelector('.minus');
+    const plusBtn = card.querySelector('.plus');
+    const qtyValue = card.querySelector('.qty-value');
+    const addBtn = card.querySelector('.add-to-cart');
+
+    stockByItemId[itemId] = availableStock;
+
+    if (availableStock < 1) {
+      qtyValue.textContent = '0';
+      minusBtn.disabled = true;
+      plusBtn.disabled = true;
+      addBtn.disabled = true;
+      return;
+    }
+
+    qtyValue.textContent = '0';
+    minusBtn.disabled = true;
+
+    minusBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const currentQty = getSafeQuantity(qtyValue.textContent);
+      if (currentQty > 0) {
+        qtyValue.textContent = currentQty - 1;
+      }
+      minusBtn.disabled = getSafeQuantity(qtyValue.textContent) <= 0;
+      plusBtn.disabled = false;
+    });
+
+    plusBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const currentQty = getSafeQuantity(qtyValue.textContent);
+      if (currentQty < availableStock) {
+        qtyValue.textContent = currentQty + 1;
+      }
+      minusBtn.disabled = false;
+      plusBtn.disabled = getSafeQuantity(qtyValue.textContent) >= availableStock;
+    });
+  });
+
+  const cartStorageKey = `cart_{{ user.id }}`;
+  if (localStorage.getItem('cart')) {
+    localStorage.removeItem('cart');
+  }
+  let cart = sanitizeCart(JSON.parse(localStorage.getItem(cartStorageKey)) || {});
+  saveCart();
+  renderCart();
+
+  function addToCart(id, name, price, quantity) {
+    const availableStock = getSafeQuantity(stockByItemId[id]);
+    const safeQuantity = getSafeQuantity(quantity);
+
+    if (availableStock < 1) {
+      showToast(`${name} is currently out of stock.`, 'warning');
+      return false;
+    }
+
+    if (safeQuantity < 1) {
+      showToast('Please choose at least 1 item.', 'warning');
+      return false;
+    }
+
+    const existingQuantity = cart[id] ? cart[id].quantity : 0;
+    const nextQuantity = Math.min(existingQuantity + safeQuantity, availableStock);
+
+    if (nextQuantity === existingQuantity) {
+      showToast(`Only ${availableStock} ${name} item(s) available.`, 'warning');
+      return false;
+    }
+
+    cart[id] = {
+      name: name,
+      price: price,
+      quantity: nextQuantity
+    };
+
+    saveCart();
+    renderCart();
+    return true;
+  }
+
+  function saveCart(){
+    cart = sanitizeCart(cart);
+    localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+  }
+
+  function decreaseCartItem(itemId) {
+    if (!cart[itemId]) {
+      return;
+    }
+
+    cart[itemId].quantity -= 1;
+    if (cart[itemId].quantity <= 0) {
+      delete cart[itemId];
+    }
+
+    saveCart();
+    renderCart();
+  }
+
+  function removeCartItem(itemId) {
+    if (!cart[itemId]) {
+      return;
+    }
+
+    delete cart[itemId];
+    saveCart();
+    renderCart();
+  }
+
+function renderCart() {
+
+    let container = document.getElementById('cart-container');
+    let totalElement = document.getElementById('cart-total');
+    let countElement = document.getElementById('cart-count');
+  let totalItemsElement = document.getElementById('cart-total-items');
+  let summaryElement = document.getElementById('cart-summary');
+
+    container.replaceChildren();
+
+    let total_price = 0;
+    let total_items = 0;
+  let selection_count = 0;
+
+    for (let key in cart) {
+
+        let item = cart[key];
+        let itemTotal = item.price * item.quantity;
+
+        total_price += itemTotal;
+        total_items += item.quantity;
+    selection_count += 1;
+
+        const cartItem = document.createElement('div');
+        cartItem.className = 'cart-item p-2 mb-2 rounded border border-secondary bg-dark';
+
+        const content = document.createElement('div');
+        content.className = 'd-flex justify-content-between align-items-center';
+
+        const itemInfo = document.createElement('div');
+
+        const itemName = document.createElement('h6');
+        itemName.className = 'fw-bold mb-1';
+        itemName.textContent = item.name;
+        itemInfo.appendChild(itemName);
+
+        const itemMeta = document.createElement('small');
+        itemMeta.className = 'cart-item-unit-price d-block';
+        itemMeta.id = 'price_quant';
+        itemMeta.textContent = `Unit Price: Rs ${item.price}`;
+        itemInfo.appendChild(itemMeta);
+
+        const itemQuantity = document.createElement('div');
+        itemQuantity.className = 'cart-item-qty';
+        itemQuantity.innerHTML = `<i class="fa fa-layer-group"></i> Qty: ${item.quantity}`;
+        itemInfo.appendChild(itemQuantity);
+
+        const itemActions = document.createElement('div');
+        itemActions.className = 'text-end';
+
+        const itemTotalElement = document.createElement('div');
+        itemTotalElement.className = 'fw-bold text-warning';
+        itemTotalElement.textContent = `Rs ${itemTotal}`;
+        itemActions.appendChild(itemTotalElement);
+
+        const itemControls = document.createElement('div');
+        itemControls.className = 'cart-item-controls justify-content-end';
+
+        const decreaseButton = document.createElement('button');
+        decreaseButton.type = 'button';
+        decreaseButton.className = 'btn btn-sm btn-outline-light';
+        decreaseButton.setAttribute('aria-label', `Decrease ${item.name}`);
+        decreaseButton.innerHTML = '<i class="fa fa-minus"></i>';
+        decreaseButton.addEventListener('click', function () {
+          decreaseCartItem(key);
+        });
+        itemControls.appendChild(decreaseButton);
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-sm btn-outline-danger remove-item';
+        removeButton.dataset.id = key;
+        removeButton.setAttribute('aria-label', `Remove ${item.name}`);
+        removeButton.innerHTML = '<i class="fa fa-trash"></i>';
+        removeButton.addEventListener('click', function () {
+          const itemEl = this.closest('.cart-item');
+          if (itemEl) {
+            itemEl.classList.add('cart-item-removing');
+            setTimeout(() => {
+              removeCartItem(this.dataset.id);
+            }, 250);
+          } else {
+            removeCartItem(this.dataset.id);
+          }
+        });
+        itemControls.appendChild(removeButton);
+        itemActions.appendChild(itemControls);
+
+        content.appendChild(itemInfo);
+        content.appendChild(itemActions);
+        cartItem.appendChild(content);
+        container.appendChild(cartItem);
+    }
+
+    totalElement.innerText = `Rs ${total_price}`;
+    countElement.innerText = total_items;
+    if (totalItemsElement) {
+      totalItemsElement.innerText = total_items;
+    }
+    if (summaryElement) {
+      summaryElement.innerText = `${selection_count} selection${selection_count === 1 ? '' : 's'}`;
+    }
+
+    // Animate cart count badge
+    countElement.classList.remove('cart-count-pop');
+    countElement.offsetHeight;
+    countElement.classList.add('cart-count-pop');
+
+    // Pulse checkout button when cart has items
+    if (checkoutButton) {
+      checkoutButton.classList.toggle('checkout-has-items', total_items > 0);
+    }
+}
+
+function clearCart() {
+    cart = {};
+    saveCart();
+    renderCart();
+}
+
+document.querySelectorAll('.add-to-cart').forEach(btn => {
+
+    btn.addEventListener('click', function() {
+
+        const itemId = this.dataset.itemId;
+        const name = this.dataset.name;
+        const price = parseFloat(this.dataset.price);
+
+        const card = this.closest('.food-card');
+        const qtyElement = card.querySelector('.qty-value');
+        const quantity = qtyElement ? getSafeQuantity(qtyElement.textContent) : 1;
+
+        const wasAdded = addToCart(itemId, name, price, quantity);
+
+        if (!wasAdded) {
+            return;
+        }
+
+        // Visual feedback with success flash
+        this.classList.add('added-flash');
+        this.innerHTML = '<i class="fa fa-check me-1"></i>Added!';
+        setTimeout(() => {
+            this.classList.remove('added-flash');
+            this.innerHTML = '<i class="fa fa-cart-plus me-1"></i>Add';
+        }, 1500);
+
+        resetCardQuantity(card);
+        const minusBtn = card.querySelector('.minus');
+        const plusBtn = card.querySelector('.plus');
+        if (minusBtn) {
+          minusBtn.disabled = true;
+        }
+        if (plusBtn) {
+          plusBtn.disabled = getSafeQuantity(card.dataset.stock) < 1;
+        }
+
+    });
+
+});
+
+
+function checkout() {
+    cart = sanitizeCart(cart);
+    saveCart();
+
+    if (Object.keys(cart).length === 0) {
+        showToast("Cart is empty!", 'warning');
+        return;
+    }
+
+    setCheckoutLoading(true);
+    fetch("/checkout/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({ cart: cart })
+    })
+    .then(response => {
+        if (response.redirected && response.url.includes('/login')) {
+            window.location.href = response.url;
+            return null;
+        }
+        return response.json().then(data => ({ ok: response.ok, data }));
+    })
+    .then(payload => {
+        if (!payload) {
+            return;
+        }
+        if (payload.ok && payload.data.success) {
+          setCheckoutTransition(true);
+            clearCart();
+          pollInventorySnapshot();
+          setTimeout(() => {
+            window.location.href = `/receipt/${payload.data.order_id}/`;
+          }, 450);
+        } else {
+          setCheckoutTransition(false);
+            showToast(payload.data.error || 'Checkout failed. Please try again.', 'danger');
+        }
+    })
+      .catch(() => {
+        setCheckoutTransition(false);
+        showToast('Checkout failed. Please try again.', 'danger');
+      })
+      .finally(() => {
+        if (!checkoutTransition || !checkoutTransition.classList.contains('is-visible')) {
+          setCheckoutLoading(false);
+        }
+      });
+}
+
+  if (menuGrid) {
+    window.setInterval(pollInventorySnapshot, POLL_INTERVAL_MS);
+  }
+</script>
+
+{% endblock %}
