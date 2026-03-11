@@ -160,3 +160,13 @@ class InventoryItemForm(forms.ModelForm):
             raise ValidationError('Image size must be 5 MB or smaller.')
 
         return food_image
+
+    def clean(self):
+        cleaned_data = super().clean()
+        quantity = cleaned_data.get('quantity')
+        is_available = cleaned_data.get('is_available')
+
+        if quantity is not None and quantity <= 0 and is_available:
+            cleaned_data['is_available'] = False
+
+        return cleaned_data

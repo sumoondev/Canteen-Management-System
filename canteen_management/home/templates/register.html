@@ -24,7 +24,6 @@
       {% for error in form.role.errors %}
       <div class="text-danger small mb-2">{{ error }}</div>
       {% endfor %}
-      <div class="auth-hint">Only students and teachers can register.</div>
 
       <label class="form-label">UserCode:</label>
       {{ form.user_code }}
@@ -38,7 +37,6 @@
       {% for error in form.username.errors %}
       <div class="text-danger small mb-2">{{ error }}</div>
       {% endfor %}
-      <div class="auth-hint">Use a unique username.</div>
 
       <label class="form-label">Password:</label>
       <div class="input-group">
@@ -50,7 +48,6 @@
       {% for error in form.password.errors %}
       <div class="text-danger small mb-2">{{ error }}</div>
       {% endfor %}
-      <div class="auth-hint">Use at least 8 characters with a mix of letters and numbers.</div>
 
       <p class="mt-2">Already have an account? <a href="/login/">Log In</a></p>
 
